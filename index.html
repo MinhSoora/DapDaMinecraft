@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Minecraft Stone Clicker</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:'Press Start 2P', monospace;
+    overflow:hidden;
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    flex-direction:column;
+    color:white;
+    background:url("https://i.pinimg.com/originals/1c/35/5a/1c355a72ace613f0134ac9d551397272.jpg") center center/cover no-repeat;
+}
+
+body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.55);
+    z-index:-1;
+}
+
+#score{
+    font-size:28px;
+    margin-bottom:20px;
+    text-shadow:3px 3px 0 #000;
+}
+
+#stone{
+    width:300px;
+    image-rendering:pixelated;
+    cursor:pointer;
+    user-select:none;
+    filter:drop-shadow(0 0 25px rgba(255,255,255,.15));
+    transition:transform .1s;
+}
+
+#stone:hover{
+    transform:scale(1.03);
+}
+
+.breaking{
+    animation:breakStone .15s;
+}
+
+@keyframes breakStone{
+    0%{transform:scale(1) rotate(0deg);}
+    25%{transform:scale(.95) rotate(-4deg);}
+    50%{transform:scale(1.05) rotate(4deg);}
+    75%{transform:scale(.95) rotate(-2deg);}
+    100%{transform:scale(1) rotate(0deg);}
+}
+
+.plus{
+    position:absolute;
+    color:#55ff55;
+    font-size:18px;
+    text-shadow:2px 2px 0 #000;
+    pointer-events:none;
+    animation:floatUp .8s forwards;
+}
+
+@keyframes floatUp{
+    from{
+        opacity:1;
+        transform:translateY(0);
+    }
+    to{
+        opacity:0;
+        transform:translateY(-80px);
+    }
+}
+
+#milestone{
+    margin-top:25px;
+    font-size:12px;
+    color:#ccc;
+    text-align:center;
+}
+
+#advancement{
+    position:fixed;
+    top:20px;
+    right:-500px;
+    width:400px;
+    background:#1e1e1e;
+    border:4px solid #555;
+    padding:15px;
+    display:flex;
+    align-items:center;
+    gap:15px;
+    transition:.5s;
+    z-index:999;
+}
+
+#advancement.show{
+    right:20px;
+}
+
+#adv-icon{
+    font-size:42px;
+}
+
+.adv-title{
+    color:#ffd700;
+    font-size:12px;
+    margin-bottom:8px;
+}
+
+.adv-text{
+    color:white;
+    font-size:10px;
+    line-height:1.5;
+}
+
+#xp-container{
+    position:fixed;
+    bottom:20px;
+    left:50%;
+    transform:translateX(-50%);
+    width:600px;
+    max-width:90%;
+}
+
+#level{
+    text-align:center;
+    color:#55ff55;
+    margin-bottom:8px;
+    text-shadow:2px 2px 0 black;
+}
+
+#xp-bar{
+    height:20px;
+    background:#222;
+    border:2px solid black;
+}
+
+#xp-fill{
+    width:0%;
+    height:100%;
+    background:linear-gradient(to right,#4cff4c,#16c916);
+    transition:.2s;
+}
+
+#musicBtn{
+    position:fixed;
+    top:20px;
+    left:20px;
+    background:#222;
+    color:white;
+    border:2px solid #555;
+    padding:10px 15px;
+    cursor:pointer;
+    font-size:18px;
+}
+
+#resetBtn{
+    position:fixed;
+    top:20px;
+    left:90px;
+    background:#aa2222;
+    color:white;
+    border:2px solid #772222;
+    padding:10px 15px;
+    cursor:pointer;
+}
+</style>
+</head>
+<body>
+
+<button id="musicBtn">🔊</button>
+<button id="resetBtn">🗑️</button>
+
+<div id="score">0 Điểm</div>
+
+<img
+id="stone"
+src="https://minecraft.wiki/images/Stone_JE5_BE3.png?5780c"
+draggable="false"
+>
+
+<div id="milestone">
+Mục tiêu tiếp theo: 10 điểm
+</div>
+
+<div id="advancement">
+    <div id="adv-icon">🏆</div>
+    <div>
+        <div class="adv-title">
+            TIẾN BỘ ĐẠT ĐƯỢC!
+        </div>
+        <div class="adv-text"></div>
+    </div>
+</div>
+
+<div id="xp-container">
+    <div id="level">Level 0</div>
+    <div id="xp-bar">
+        <div id="xp-fill"></div>
+    </div>
+</div>
+
+<!-- Nhạc nền -->
+<audio id="bgm" loop>
+    <source src="music/sweden.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+
+let score =
+Number(localStorage.getItem("stone_score")) || 0;
+
+const achievements = {
+    10:"🪨 Người Đập Đá Tập Sự",
+    50:"⛏️ Đá Và Chỉ Có Đá",
+    100:"💎 Chuyên Gia Đập Đá",
+    500:"🔥 Máy Khoan Công Nghiệp",
+    1000:"👑 Vua Cục Đá",
+    5000:"🌌 Đá Không Thể Bị Phá Hủy",
+    10000:"❓ Tại Sao Bạn Vẫn Đang Click?",
+    50000:"😵 Nỗi Ám Ảnh Cục Đá",
+    100000:"🗿 Trở Thành Một Với Đá"
+};
+
+const stone = document.getElementById("stone");
+const scoreText = document.getElementById("score");
+const milestoneText = document.getElementById("milestone");
+const xpFill = document.getElementById("xp-fill");
+const levelText = document.getElementById("level");
+const advancement = document.getElementById("advancement");
+const advText = document.querySelector(".adv-text");
+
+function playStoneSound(){
+
+    const sounds = [
+        "sounds/stone1.mp3",
+        "sounds/stone2.mp3",
+        "sounds/stone3.mp3",
+        "sounds/stone4.mp3"
+    ];
+
+    const random =
+        sounds[Math.floor(Math.random() * sounds.length)];
+
+    const sound = new Audio(random);
+
+    sound.volume = 0.45;
+    sound.play().catch(()=>{});
+}
+
+function playAdvancementSound(){
+
+    const sound =
+        new Audio("sounds/toast.mp3");
+
+    sound.volume = 0.8;
+
+    sound.play().catch(()=>{});
+}
+
+function showAdvancement(text){
+
+    advText.textContent = text;
+
+    advancement.classList.add("show");
+
+    setTimeout(()=>{
+        advancement.classList.remove("show");
+    },4000);
+}
+
+function updateUI(){
+
+    scoreText.textContent =
+        score.toLocaleString() + " Điểm";
+
+    localStorage.setItem(
+        "stone_score",
+        score
+    );
+
+    const level =
+        Math.floor(score / 100);
+
+    const progress =
+        score % 100;
+
+    xpFill.style.width =
+        progress + "%";
+
+    levelText.textContent =
+        "Level " + level;
+
+    let next = null;
+
+    for(const key in achievements){
+
+        if(score < Number(key)){
+            next = key;
+            break;
+        }
+    }
+
+    if(next){
+        milestoneText.textContent =
+        "Mục tiêu tiếp theo: " +
+        Number(next).toLocaleString() +
+        " điểm";
+    }else{
+        milestoneText.textContent =
+        "Đã hoàn thành mọi thành tựu!";
+    }
+}
+
+stone.addEventListener("click",(e)=>{
+
+    playStoneSound();
+
+    score++;
+
+    stone.classList.add("breaking");
+
+    setTimeout(()=>{
+        stone.classList.remove("breaking");
+    },150);
+
+    const plus =
+        document.createElement("div");
+
+    plus.className = "plus";
+    plus.textContent = "+1";
+
+    plus.style.left =
+        e.pageX + "px";
+
+    plus.style.top =
+        e.pageY + "px";
+
+    document.body.appendChild(plus);
+
+    setTimeout(()=>{
+        plus.remove();
+    },800);
+
+    if(achievements[score]){
+
+        playAdvancementSound();
+
+        showAdvancement(
+            achievements[score]
+        );
+    }
+
+    updateUI();
+});
+
+document
+.getElementById("resetBtn")
+.addEventListener("click",()=>{
+
+    if(confirm("Xóa toàn bộ tiến trình?")){
+
+        score = 0;
+
+        localStorage.removeItem(
+            "stone_score"
+        );
+
+        updateUI();
+    }
+});
+
+updateUI();
+
+/* Music */
+
+const bgm =
+document.getElementById("bgm");
+
+const musicBtn =
+document.getElementById("musicBtn");
+
+musicBtn.addEventListener("click",()=>{
+
+    if(bgm.paused){
+
+        bgm.play();
+
+        musicBtn.textContent = "🔊";
+
+    }else{
+
+        bgm.pause();
+
+        musicBtn.textContent = "🔇";
+    }
+});
+
+document.addEventListener(
+"click",
+()=>{
+
+    if(bgm.paused){
+
+        bgm.play()
+        .catch(()=>{});
+    }
+
+},
+{once:true}
+);
+
+</script>
+
+</body>
+</html>
