@@ -2,181 +2,308 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Minecraft Stone Clicker</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Minecraft Stone Clicker - Đấu Trường Đá Với Bot</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    user-select: none;
 }
 
-body{
-    font-family:'Press Start 2P', monospace;
-    overflow:hidden;
-    height:100vh;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    flex-direction:column;
-    color:white;
-    background:url("https://i.pinimg.com/originals/1c/35/5a/1c355a72ace613f0134ac9d551397272.jpg") center center/cover no-repeat;
+body {
+    font-family: 'Press Start 2P', monospace;
+    min-height: 100vh;
+    background: url("https://i.pinimg.com/originals/1c/35/5a/1c355a72ace613f0134ac9d551397272.jpg") center center/cover no-repeat fixed;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    position: relative;
 }
 
-body::before{
-    content:"";
-    position:fixed;
-    inset:0;
-    background:rgba(0,0,0,.55);
-    z-index:-1;
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    z-index: -1;
 }
 
-#score{
-    font-size:28px;
-    margin-bottom:20px;
-    text-shadow:3px 3px 0 #000;
+/* Main game container (normal mode) */
+#normalMode {
+    text-align: center;
+    transition: all 0.2s;
 }
 
-#stone{
-    width:300px;
-    image-rendering:pixelated;
-    cursor:pointer;
-    user-select:none;
-    filter:drop-shadow(0 0 25px rgba(255,255,255,.15));
-    transition:transform .1s;
+/* Arena mode (battle vs Bot) */
+#arenaMode {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(4px);
 }
 
-#stone:hover{
-    transform:scale(1.03);
+.hidden {
+    display: none !important;
 }
 
-.breaking{
-    animation:breakStone .15s;
+.arena-container {
+    background: #2b2b2b;
+    border: 6px solid #5a5a5a;
+    border-radius: 20px;
+    padding: 20px;
+    width: 90%;
+    max-width: 1100px;
+    box-shadow: 0 0 30px black;
 }
 
-@keyframes breakStone{
+.arena-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 10px 20px;
+    background: #1e1e1e;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.timer-box, .cps-box {
+    background: black;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 20px;
+    color: #ffaa00;
+    text-shadow: 2px 2px 0 #552200;
+}
+
+.battle-score {
+    font-size: 22px;
+    background: #0a0a0a;
+    padding: 5px 12px;
+    border-radius: 16px;
+}
+
+.arena-columns {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 40px;
+    margin: 20px 0;
+}
+
+.col {
+    flex: 1;
+    min-width: 260px;
+    background: #1f1f1f;
+    border-radius: 28px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 8px 0 #0a0a0a;
+}
+
+.col h3 {
+    font-size: 20px;
+    margin-bottom: 15px;
+    border-bottom: 2px dashed #aaaa55;
+    display: inline-block;
+    padding-bottom: 6px;
+}
+
+.bot-difficulty {
+    font-size: 11px;
+    background: #3a2a1e;
+    padding: 6px;
+    border-radius: 20px;
+    margin: 10px 0;
+    color: #f5c542;
+}
+
+.arena-stone {
+    width: 160px;
+    cursor: pointer;
+    image-rendering: pixelated;
+    filter: drop-shadow(0 0 12px rgba(0,0,0,0.5));
+    transition: 0.05s linear;
+    margin: 10px auto;
+}
+
+.arena-stone:active {
+    transform: scale(0.96);
+}
+
+.bot-stone {
+    filter: grayscale(0.2) drop-shadow(0 0 8px #6b4c3b);
+    cursor: default;
+}
+
+.bot-score-display {
+    font-size: 28px;
+    margin: 12px 0;
+    color: #ffaa66;
+}
+
+.player-score-arena {
+    font-size: 32px;
+    color: #55ff55;
+    font-weight: bold;
+    margin: 12px 0;
+}
+
+.result-area {
+    margin-top: 20px;
+    text-align: center;
+    background: #111;
+    padding: 15px;
+    border-radius: 24px;
+}
+
+.result-text {
+    font-size: 24px;
+    letter-spacing: 2px;
+}
+
+.arena-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.arena-btn {
+    background: #2c2c2c;
+    border: 2px solid #aaa;
+    padding: 10px 20px;
+    font-family: 'Press Start 2P', monospace;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.arena-btn:hover {
+    background: #4f4f4f;
+}
+
+/* CPS counter normal mode */
+#cpsCounter {
+    margin-top: 20px;
+    background: #000000aa;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 14px;
+    color: #aaffdd;
+    backdrop-filter: blur(4px);
+}
+
+/* các style cũ giữ */
+#stone {
+    width: 280px;
+    image-rendering: pixelated;
+    cursor: pointer;
+    filter: drop-shadow(0 0 25px rgba(255,255,255,.15));
+    transition: transform .1s;
+}
+#stone:hover {
+    transform: scale(1.02);
+}
+.breaking {
+    animation: breakStone .12s;
+}
+@keyframes breakStone {
     0%{transform:scale(1) rotate(0deg);}
-    25%{transform:scale(.95) rotate(-4deg);}
-    50%{transform:scale(1.05) rotate(4deg);}
-    75%{transform:scale(.95) rotate(-2deg);}
+    30%{transform:scale(.92) rotate(-4deg);}
+    70%{transform:scale(1.05) rotate(3deg);}
     100%{transform:scale(1) rotate(0deg);}
 }
-
-.plus{
-    position:absolute;
-    color:#55ff55;
-    font-size:18px;
-    text-shadow:2px 2px 0 #000;
-    pointer-events:none;
-    animation:floatUp .8s forwards;
+.plus {
+    position: absolute;
+    color: #bbff88;
+    font-size: 20px;
+    font-weight: bold;
+    text-shadow: 1px 1px 0 black;
+    pointer-events: none;
+    animation: floatUp 0.7s forwards;
+    z-index: 2000;
 }
-
-@keyframes floatUp{
-    from{
-        opacity:1;
-        transform:translateY(0);
-    }
-    to{
-        opacity:0;
-        transform:translateY(-80px);
-    }
+@keyframes floatUp {
+    from { opacity: 1; transform: translateY(0px) scale(0.8);}
+    to { opacity: 0; transform: translateY(-70px) scale(1.2);}
 }
-
-#milestone{
-    margin-top:25px;
-    font-size:12px;
-    color:#ccc;
-    text-align:center;
+#milestone {
+    margin-top: 20px;
+    font-size: 11px;
+    background: #00000077;
+    padding: 8px;
+    border-radius: 30px;
 }
-
-#advancement{
-    position:fixed;
-    top:20px;
-    right:-500px;
-    width:400px;
-    background:#1e1e1e;
-    border:4px solid #555;
-    padding:15px;
-    display:flex;
-    align-items:center;
-    gap:15px;
-    transition:.5s;
-    z-index:999;
+#advancement {
+    position: fixed;
+    top: 20px;
+    right: -500px;
+    width: 380px;
+    background: #1e1e1e;
+    border-left: 6px solid #ffcc44;
+    padding: 12px;
+    transition: 0.4s;
+    z-index: 1500;
+    font-size: 11px;
 }
-
-#advancement.show{
-    right:20px;
+#advancement.show {
+    right: 20px;
 }
-
-#adv-icon{
-    font-size:42px;
+#xp-container {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 500px;
+    max-width: 85%;
 }
-
-.adv-title{
-    color:#ffd700;
-    font-size:12px;
-    margin-bottom:8px;
+#level {
+    font-size: 12px;
 }
-
-.adv-text{
-    color:white;
-    font-size:10px;
-    line-height:1.5;
+#xp-bar {
+    height: 12px;
+    background: #2b2b2b;
+    border: 1px solid #555;
 }
-
-#xp-container{
-    position:fixed;
-    bottom:20px;
-    left:50%;
-    transform:translateX(-50%);
-    width:600px;
-    max-width:90%;
+#xp-fill {
+    width: 0%;
+    height: 100%;
+    background: #2ecc2e;
 }
-
-#level{
-    text-align:center;
-    color:#55ff55;
-    margin-bottom:8px;
-    text-shadow:2px 2px 0 black;
+#musicBtn, #resetBtn, #battleBtn {
+    position: fixed;
+    background: #111;
+    color: white;
+    border: 2px solid #6b6b6b;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 18px;
+    z-index: 1200;
 }
+#musicBtn { top: 20px; left: 20px; }
+#resetBtn { top: 20px; left: 100px; }
+#battleBtn { top: 20px; left: 190px; background: #3a6b2f; border-color: #aaff77;}
 
-#xp-bar{
-    height:20px;
-    background:#222;
-    border:2px solid black;
-}
-
-#xp-fill{
-    width:0%;
-    height:100%;
-    background:linear-gradient(to right,#4cff4c,#16c916);
-    transition:.2s;
-}
-
-#musicBtn{
-    position:fixed;
-    top:20px;
-    left:20px;
-    background:#222;
-    color:white;
-    border:2px solid #555;
-    padding:10px 15px;
-    cursor:pointer;
-    font-size:18px;
-}
-
-#resetBtn{
-    position:fixed;
-    top:20px;
-    left:90px;
-    background:#aa2222;
-    color:white;
-    border:2px solid #772222;
-    padding:10px 15px;
-    cursor:pointer;
+@media (max-width: 680px) {
+    .arena-stone { width: 110px; }
+    .col h3 { font-size: 14px; }
+    .timer-box { font-size: 14px; }
 }
 </style>
 </head>
@@ -184,46 +311,69 @@ body::before{
 
 <button id="musicBtn">🔊</button>
 <button id="resetBtn">🗑️</button>
+<button id="battleBtn">⚔️ ĐẤU VỚI BOT</button>
 
-<div id="score">0 Điểm</div>
+<!-- Chế độ bình thường -->
+<div id="normalMode">
+    <div id="score">0 Điểm</div>
+    <img id="stone" src="https://minecraft.wiki/images/Stone_JE5_BE3.png?5780c" draggable="false">
+    <div id="milestone">Mục tiêu tiếp theo: 10 điểm</div>
+    <div id="cpsCounter">📊 CPS: 0.00</div>
+</div>
 
-<img
-id="stone"
-src="https://minecraft.wiki/images/Stone_JE5_BE3.png?5780c"
-draggable="false"
->
-
-<div id="milestone">
-Mục tiêu tiếp theo: 10 điểm
+<!-- Chế độ đấu trường (60s với bot) -->
+<div id="arenaMode" class="hidden">
+    <div class="arena-container">
+        <div class="arena-header">
+            <div class="timer-box">⏱️ <span id="arenaTimer">60</span>s</div>
+            <div class="cps-box">⚡ CPS của bạn: <span id="arenaCPS">0</span></div>
+            <div class="battle-score">🏆 Điểm: <span id="arenaPlayerScore">0</span> vs <span id="arenaBotScore">0</span></div>
+        </div>
+        <div class="arena-columns">
+            <!-- Cột người chơi -->
+            <div class="col">
+                <h3>👤 THỢ MỎ</h3>
+                <img id="arenaPlayerStone" class="arena-stone" src="https://minecraft.wiki/images/Stone_JE5_BE3.png?5780c" draggable="false">
+                <div class="player-score-arena" id="arenaPlayerPoint">0</div>
+                <div style="font-size:12px;">🔨 Click thật nhanh!</div>
+            </div>
+            <!-- Cột Bot -->
+            <div class="col">
+                <h3>🤖 BOT <span id="botName">Golem Đá</span></h3>
+                <img id="arenaBotStone" class="arena-stone bot-stone" src="https://minecraft.wiki/images/Stone_JE5_BE3.png?5780c" draggable="false">
+                <div class="bot-difficulty" id="botDiffLabel">Cấp độ: ???</div>
+                <div class="bot-score-display" id="arenaBotPoint">0</div>
+                <div style="font-size:10px; opacity:0.8;">🤖 Tự động đập đá</div>
+            </div>
+        </div>
+        <div class="result-area" id="arenaResultArea">
+            <div class="result-text" id="arenaResultText">⚔️ HÃY CLICK ĐỂ BẮT ĐẦU! ⚔️</div>
+        </div>
+        <div class="arena-buttons">
+            <button class="arena-btn" id="arenaQuitBtn">🚪 THOÁT</button>
+        </div>
+    </div>
 </div>
 
 <div id="advancement">
     <div id="adv-icon">🏆</div>
     <div>
-        <div class="adv-title">
-            TIẾN BỘ ĐẠT ĐƯỢC!
-        </div>
+        <div class="adv-title">TIẾN BỘ ĐẠT ĐƯỢC!</div>
         <div class="adv-text"></div>
     </div>
 </div>
-
 <div id="xp-container">
     <div id="level">Level 0</div>
-    <div id="xp-bar">
-        <div id="xp-fill"></div>
-    </div>
+    <div id="xp-bar"><div id="xp-fill"></div></div>
 </div>
 
-<!-- Nhạc nền -->
 <audio id="bgm" loop>
     <source src="music/sweden.mp3" type="audio/mpeg">
 </audio>
 
 <script>
-
-let score =
-Number(localStorage.getItem("stone_score")) || 0;
-
+// ======================= THÔNG SỐ CHÍNH =======================
+let globalScore = Number(localStorage.getItem("stone_score")) || 0;
 const achievements = {
     10:"🪨 Người Đập Đá Tập Sự",
     50:"⛏️ Đá Và Chỉ Có Đá",
@@ -236,192 +386,371 @@ const achievements = {
     100000:"🗿 Trở Thành Một Với Đá"
 };
 
-const stone = document.getElementById("stone");
+// DOM elements
+const stoneImg = document.getElementById("stone");
 const scoreText = document.getElementById("score");
 const milestoneText = document.getElementById("milestone");
 const xpFill = document.getElementById("xp-fill");
 const levelText = document.getElementById("level");
-const advancement = document.getElementById("advancement");
-const advText = document.querySelector(".adv-text");
+const advancementDiv = document.getElementById("advancement");
+const advTextElem = document.querySelector(".adv-text");
+const normalMode = document.getElementById("normalMode");
+const arenaModeDiv = document.getElementById("arenaMode");
+const battleBtn = document.getElementById("battleBtn");
 
-function playStoneSound(){
+// Arena elements
+const arenaTimerSpan = document.getElementById("arenaTimer");
+const arenaCpsSpan = document.getElementById("arenaCPS");
+const arenaPlayerScoreSpan = document.getElementById("arenaPlayerScore");
+const arenaBotScoreSpan = document.getElementById("arenaBotScore");
+const arenaPlayerPointDiv = document.getElementById("arenaPlayerPoint");
+const arenaBotPointDiv = document.getElementById("arenaBotPoint");
+const arenaResultText = document.getElementById("arenaResultText");
+const arenaPlayerStone = document.getElementById("arenaPlayerStone");
+const botNameSpan = document.getElementById("botName");
+const botDiffLabel = document.getElementById("botDiffLabel");
 
-    const sounds = [
-        "sounds/stone1.mp3",
-    ];
-
-    const random =
-        sounds[Math.floor(Math.random() * sounds.length)];
-
-    const sound = new Audio(random);
-
-    sound.volume = 0.45;
+// ======================= HÀM PHỤ TRỢ =======================
+function playStoneSound() {
+    const sound = new Audio("sounds/stone1.mp3");
+    sound.volume = 0.4;
     sound.play().catch(()=>{});
 }
-
-function playAdvancementSound(){
-
-    const sound =
-        new Audio("sounds/toast.mp3");
-
-    sound.volume = 0.8;
-
+function playAdvancementSound() {
+    const sound = new Audio("sounds/toast.mp3");
+    sound.volume = 0.6;
     sound.play().catch(()=>{});
 }
-
-function showAdvancement(text){
-
-    advText.textContent = text;
-
-    advancement.classList.add("show");
-
-    setTimeout(()=>{
-        advancement.classList.remove("show");
-    },4000);
+function showAdvancement(text) {
+    advTextElem.textContent = text;
+    advancementDiv.classList.add("show");
+    setTimeout(()=> advancementDiv.classList.remove("show"), 4000);
 }
-
-function updateUI(){
-
-    scoreText.textContent =
-        score.toLocaleString() + " Điểm";
-
-    localStorage.setItem(
-        "stone_score",
-        score
-    );
-
-    const level =
-        Math.floor(score / 100);
-
-    const progress =
-        score % 100;
-
-    xpFill.style.width =
-        progress + "%";
-
-    levelText.textContent =
-        "Level " + level;
-
+function updateUI() {
+    scoreText.textContent = globalScore.toLocaleString() + " Điểm";
+    localStorage.setItem("stone_score", globalScore);
+    const level = Math.floor(globalScore / 100);
+    const progress = globalScore % 100;
+    xpFill.style.width = progress + "%";
+    levelText.textContent = "Level " + level;
     let next = null;
-
-    for(const key in achievements){
-
-        if(score < Number(key)){
-            next = key;
-            break;
-        }
+    for(const key in achievements) {
+        if(globalScore < Number(key)) { next = key; break; }
     }
-
-    if(next){
-        milestoneText.textContent =
-        "Mục tiêu tiếp theo: " +
-        Number(next).toLocaleString() +
-        " điểm";
-    }else{
-        milestoneText.textContent =
-        "Đã hoàn thành mọi thành tựu!";
-    }
+    if(next) milestoneText.textContent = "Mục tiêu tiếp theo: " + Number(next).toLocaleString() + " điểm";
+    else milestoneText.textContent = "Đã hoàn thành mọi thành tựu!";
 }
-
-stone.addEventListener("click",(e)=>{
-
-    playStoneSound();
-
-    score++;
-
-    stone.classList.add("breaking");
-
-    setTimeout(()=>{
-        stone.classList.remove("breaking");
-    },150);
-
-    const plus =
-        document.createElement("div");
-
+function addPointEffect(e, clientX, clientY, value = "+1") {
+    const plus = document.createElement("div");
     plus.className = "plus";
-    plus.textContent = "+1";
-
-    plus.style.left =
-        e.pageX + "px";
-
-    plus.style.top =
-        e.pageY + "px";
-
+    plus.textContent = value;
+    let x = clientX, y = clientY;
+    if(!x && e && e.pageX) x = e.pageX;
+    if(!y && e && e.pageY) y = e.pageY;
+    plus.style.left = (x - 15) + "px";
+    plus.style.top = (y - 20) + "px";
     document.body.appendChild(plus);
-
-    setTimeout(()=>{
-        plus.remove();
-    },800);
-
-    if(achievements[score]){
-
-        playAdvancementSound();
-
-        showAdvancement(
-            achievements[score]
-        );
+    setTimeout(()=> plus.remove(), 700);
+}
+// ======================= CPS TRONG NORMAL MODE =======================
+let clickTimestamps = [];
+let cpsInterval = null;
+function recordClickForCPS() {
+    const now = Date.now();
+    clickTimestamps.push(now);
+    clickTimestamps = clickTimestamps.filter(t => now - t < 1000);
+    const cps = clickTimestamps.length;
+    const cpsElem = document.getElementById("cpsCounter");
+    if(cpsElem) cpsElem.innerHTML = `📊 CPS: ${cps.toFixed(2)}`;
+}
+setInterval(() => {
+    if(normalMode && !normalMode.classList.contains("hidden") && window.location.href) {
+        const now = Date.now();
+        clickTimestamps = clickTimestamps.filter(t => now - t < 1000);
+        const cps = clickTimestamps.length;
+        const cpsElem = document.getElementById("cpsCounter");
+        if(cpsElem) cpsElem.innerHTML = `📊 CPS: ${cps.toFixed(2)}`;
     }
+}, 300);
 
+// ======================= SỰ KIỆN CLICK ĐÁ BÌNH THƯỜNG =======================
+function normalClickHandler(e) {
+    recordClickForCPS();
+    playStoneSound();
+    globalScore++;
+    stoneImg.classList.add("breaking");
+    setTimeout(()=> stoneImg.classList.remove("breaking"), 150);
+    addPointEffect(e, e.clientX, e.clientY, "+1");
+    if(achievements[globalScore]) {
+        playAdvancementSound();
+        showAdvancement(achievements[globalScore]);
+    }
     updateUI();
-});
+}
+stoneImg.addEventListener("click", normalClickHandler);
 
-document
-.getElementById("resetBtn")
-.addEventListener("click",()=>{
-
-    if(confirm("Xóa toàn bộ tiến trình?")){
-
-        score = 0;
-
-        localStorage.removeItem(
-            "stone_score"
-        );
-
+// reset button
+document.getElementById("resetBtn").addEventListener("click",()=>{
+    if(confirm("Xóa toàn bộ tiến trình?")) {
+        globalScore = 0;
+        localStorage.removeItem("stone_score");
         updateUI();
     }
 });
 
-updateUI();
+// ======================= HỆ THỐNG ĐẤU TRƯỜNG (BOT) =======================
+let arenaActive = false;
+let arenaInterval = null;
+let botInterval = null;
+let arenaTimeLeft = 60;
+let playerArenaScore = 0;
+let botArenaScore = 0;
+let currentBotProfile = null;
+let lastClickRecord = []; // dùng cho CPS trong arena
+let arenaCPSUpdateInterval = null;
 
-/* Music */
+// 10 cấp độ bot (tốc độ click/giây từ chậm đến cực nhanh)
+const botProfiles = [
+    { name: "🐌 Thạch Sùng Lười", baseCPS: 1.2, variance: 0.6, color:"#aaaaaa" },
+    { name: "🪨 Zombie Đá", baseCPS: 2.3, variance: 0.8, color:"#7c7c3a" },
+    { name: "⛏️ Thợ Mỏ Cấp Thấp", baseCPS: 3.5, variance: 0.9, color:"#bc9a6c" },
+    { name: "⚙️ Golem Sắt", baseCPS: 4.8, variance: 1.0, color:"#c0c0c0" },
+    { name: "💎 Creeper Kim Cương", baseCPS: 6.2, variance: 1.2, color:"#6fe8ff" },
+    { name: "🔥 Khoan Nhiệt Hạch", baseCPS: 8.0, variance: 1.5, color:"#ff884d" },
+    { name: "👑 Vua Đá Ngầm", baseCPS: 10.2, variance: 1.8, color:"#ffcc55" },
+    { name: "🌀 Wither Đá", baseCPS: 12.5, variance: 2.0, color:"#553377" },
+    { name: "🚀 Siêu Khoan Vũ Trụ", baseCPS: 15.0, variance: 2.2, color:"#ff55ff" },
+    { name: "🤖 THEO DÕI BÃO TÁP", baseCPS: 18.0, variance: 2.5, color:"#ff0000" }
+];
 
-const bgm =
-document.getElementById("bgm");
+function pickRandomBot() {
+    const idx = Math.floor(Math.random() * botProfiles.length);
+    return { ...botProfiles[idx], idx };
+}
 
-const musicBtn =
-document.getElementById("musicBtn");
+function startArena() {
+    if(arenaActive) return;
+    // reset dữ liệu đấu
+    arenaActive = true;
+    playerArenaScore = 0;
+    botArenaScore = 0;
+    arenaTimeLeft = 60;
+    lastClickRecord = [];
+    if(arenaCPSUpdateInterval) clearInterval(arenaCPSUpdateInterval);
+    arenaCPSUpdateInterval = setInterval(updateArenaCPS, 400);
+    
+    // chọn bot random
+    currentBotProfile = pickRandomBot();
+    botNameSpan.textContent = currentBotProfile.name;
+    botDiffLabel.textContent = `⚡ Tốc độ: ${currentBotProfile.baseCPS.toFixed(1)} click/s`;
+    botDiffLabel.style.color = currentBotProfile.color;
+    
+    updateArenaUI();
+    arenaResultText.textContent = "⚔️ CHIẾN ĐẤU BẮT ĐẦU! HÃY CLICK!!! ⚔️";
+    
+    // Timer đếm ngược
+    if(arenaInterval) clearInterval(arenaInterval);
+    arenaInterval = setInterval(() => {
+        if(!arenaActive) return;
+        if(arenaTimeLeft <= 1) {
+            // kết thúc trận
+            endArenaMatch();
+        } else {
+            arenaTimeLeft--;
+            arenaTimerSpan.textContent = arenaTimeLeft;
+            if(arenaTimeLeft <= 5) arenaTimerSpan.style.color = "#ff6666";
+            else arenaTimerSpan.style.color = "#ffaa00";
+        }
+    }, 1000);
+    
+    // Bot click tự động theo cơ chế random (CPS thực tế)
+    if(botInterval) clearInterval(botInterval);
+    scheduleBotClick();
+}
 
-musicBtn.addEventListener("click",()=>{
+function scheduleBotClick() {
+    if(!arenaActive) return;
+    // Tính khoảng delay dựa trên baseCPS + variance
+    const base = currentBotProfile.baseCPS;
+    const variance = currentBotProfile.variance;
+    // mỗi lần click delay trung bình 1/CPS giây (ms)
+    let avgDelayMs = 1000 / (base + (Math.random() * variance * 2 - variance));
+    // giới hạn min max 30ms -> 800ms
+    avgDelayMs = Math.min(400, Math.max(45, avgDelayMs));
+    botInterval = setTimeout(() => {
+        if(!arenaActive) return;
+        // Bot click +1 điểm
+        botArenaScore++;
+        updateArenaUI();
+        // hiệu ứng +1 từ bot (hiển thị bên cột bot)
+        const botStoneImg = document.getElementById("arenaBotStone");
+        if(botStoneImg) {
+            const rect = botStoneImg.getBoundingClientRect();
+            const fakeEvent = { clientX: rect.left + rect.width/2, clientY: rect.top + rect.height/2 };
+            addPointEffect(null, fakeEvent.clientX, fakeEvent.clientY, "-1");
+        }
+        // tiếp tục lịch trình
+        scheduleBotClick();
+    }, avgDelayMs);
+}
 
-    if(bgm.paused){
+function updateArenaCPS() {
+    if(!arenaActive) return;
+    const now = Date.now();
+    lastClickRecord = lastClickRecord.filter(t => now - t < 1000);
+    const currentCPS = lastClickRecord.length;
+    arenaCpsSpan.textContent = currentCPS;
+}
 
-        bgm.play();
+function playerArenaClickHandler(e) {
+    if(!arenaActive) return;
+    // ghi nhận click tính CPS
+    const now = Date.now();
+    lastClickRecord.push(now);
+    // Cộng điểm
+    playerArenaScore++;
+    updateArenaUI();
+    playStoneSound();
+    // hiệu ứng click lên cục đá arena
+    const stoneArena = document.getElementById("arenaPlayerStone");
+    stoneArena.classList.add("breaking");
+    setTimeout(()=> stoneArena.classList.remove("breaking"), 120);
+    let clientX = e.clientX, clientY = e.clientY;
+    if(!clientX && e.touches) { clientX = e.touches[0].clientX; clientY = e.touches[0].clientY; }
+    addPointEffect(e, clientX, clientY, "+1 điểm chiến trường");
+}
+arenaPlayerStone.addEventListener("click", playerArenaClickHandler);
 
-        musicBtn.textContent = "🔊";
+function updateArenaUI() {
+    arenaPlayerScoreSpan.textContent = playerArenaScore;
+    arenaBotScoreSpan.textContent = botArenaScore;
+    arenaPlayerPointDiv.textContent = playerArenaScore;
+    arenaBotPointDiv.textContent = botArenaScore;
+}
 
-    }else{
+function endArenaMatch() {
+    if(!arenaActive) return;
+    arenaActive = false;
+    if(arenaInterval) clearInterval(arenaInterval);
+    if(botInterval) clearTimeout(botInterval);
+    if(arenaCPSUpdateInterval) clearInterval(arenaCPSUpdateInterval);
+    arenaInterval = null;
+    botInterval = null;
+    // xác định kết quả
+    let resultMsg = "";
+    if(playerArenaScore > botArenaScore) {
+        resultMsg = `🎉 CHIẾN THẮNG! ${playerArenaScore} - ${botArenaScore} 🎉 Bạn nhanh hơn Bot! +${Math.floor(playerArenaScore/10)} điểm thưởng`;
+        const bonus = Math.floor(playerArenaScore / 10);
+        if(bonus > 0) {
+            globalScore += bonus;
+            updateUI();
+            showAdvancement(`🏅 Thưởng đấu trường +${bonus} điểm!`);
+        }
+    } else if(playerArenaScore < botArenaScore) {
+        resultMsg = `💀 THẤT BẠI! ${playerArenaScore} - ${botArenaScore} 💀 Bot mạnh hơn. Cố gắng lần sau!`;
+    } else {
+        resultMsg = `🤝 HÒA! ${playerArenaScore} - ${botArenaScore} 🤝 Không phân thắng bại!`;
+    }
+    arenaResultText.innerHTML = resultMsg + `<br><span style="font-size:12px;">🎯 Tổng click bạn: ${playerArenaScore} | Bot: ${botArenaScore}</span>`;
+    // vô hiệu hóa click bot sau cùng
+    // cho nút thoát vẫn hoạt động, có thể quay lại
+}
 
-        bgm.pause();
+function closeArenaAndBackToNormal() {
+    if(arenaActive) {
+        // đang chơi, hủy trận
+        if(arenaInterval) clearInterval(arenaInterval);
+        if(botInterval) clearTimeout(botInterval);
+        if(arenaCPSUpdateInterval) clearInterval(arenaCPSUpdateInterval);
+        arenaActive = false;
+    }
+    arenaModeDiv.classList.add("hidden");
+    normalMode.classList.remove("hidden");
+    // reset các giá trị arena
+    playerArenaScore = 0;
+    botArenaScore = 0;
+    arenaTimeLeft = 60;
+    updateArenaUI();
+    arenaTimerSpan.textContent = "60";
+    arenaResultText.innerHTML = "⚔️ HÃY CLICK ĐỂ BẮT ĐẦU! ⚔️";
+    arenaCpsSpan.textContent = "0";
+}
 
-        musicBtn.textContent = "🔇";
+// Nút mở đấu trường
+battleBtn.addEventListener("click", () => {
+    if(arenaActive) {
+        if(confirm("Đang có trận đấu, bạn muốn thoát và bắt đầu trận mới?")) {
+            closeArenaAndBackToNormal();
+            setTimeout(() => {
+                openArenaFresh();
+            }, 50);
+        }
+        return;
+    }
+    openArenaFresh();
+});
+
+function openArenaFresh() {
+    // chuyển sang chế độ arena
+    normalMode.classList.add("hidden");
+    arenaModeDiv.classList.remove("hidden");
+    // reset toàn bộ
+    if(arenaInterval) clearInterval(arenaInterval);
+    if(botInterval) clearTimeout(botInterval);
+    if(arenaCPSUpdateInterval) clearInterval(arenaCPSUpdateInterval);
+    arenaActive = false;
+    playerArenaScore = 0;
+    botArenaScore = 0;
+    arenaTimeLeft = 60;
+    lastClickRecord = [];
+    updateArenaUI();
+    arenaTimerSpan.textContent = "60";
+    arenaResultText.innerHTML = "⚔️ CLICK VÀO CỤC ĐÁ BÊN TRÁI ĐỂ CHIẾN! ⚔️";
+    arenaCpsSpan.textContent = "0";
+    // chọn bot mới random hiển thị
+    currentBotProfile = pickRandomBot();
+    botNameSpan.textContent = currentBotProfile.name;
+    botDiffLabel.textContent = `⚡ Tốc độ: ${currentBotProfile.baseCPS.toFixed(1)} click/s`;
+    botDiffLabel.style.color = currentBotProfile.color;
+    // bắt đầu luôn
+    startArena();
+}
+
+document.getElementById("arenaQuitBtn").addEventListener("click", () => {
+    if(arenaActive) {
+        if(confirm("Thoát khỏi đấu trường? Kết quả sẽ không được tính.")) {
+            closeArenaAndBackToNormal();
+        }
+    } else {
+        closeArenaAndBackToNormal();
     }
 });
 
-document.addEventListener(
-"click",
-()=>{
+// ======================= NHẠC NỀN =======================
+const bgm = document.getElementById("bgm");
+const musicBtn = document.getElementById("musicBtn");
+musicBtn.addEventListener("click", ()=>{
+    if(bgm.paused) { bgm.play(); musicBtn.textContent = "🔊"; }
+    else { bgm.pause(); musicBtn.textContent = "🔇"; }
+});
+document.addEventListener("click", ()=>{
+    if(bgm.paused) bgm.play().catch(()=>{});
+}, {once:true});
 
-    if(bgm.paused){
+// Khởi tạo giao diện chính
+updateUI();
 
-        bgm.play()
-        .catch(()=>{});
+// Tự động lưu CPS mỗi giây (normal)
+setInterval(() => {
+    if(normalMode && !normalMode.classList.contains("hidden")) {
+        const now = Date.now();
+        clickTimestamps = clickTimestamps.filter(t => now - t < 1000);
+        const cpsElem = document.getElementById("cpsCounter");
+        if(cpsElem) cpsElem.innerHTML = `📊 CPS: ${clickTimestamps.length.toFixed(2)}`;
     }
+}, 350);
 
-},
-{once:true}
-);
-
+console.log("Game sẵn sàng! Bấm nút Đấu với Bot để thách đấu 60 giây.");
 </script>
-
 </body>
 </html>
